@@ -138,7 +138,7 @@ body {
   top: 25%;
   right: 0;
   width: 30%;
-  max-height: 70%;
+  max-height: 75%;
   margin-right: 5%;
   margin-top: 5px;
   margin-bottom: 10px;
@@ -150,16 +150,18 @@ body {
   overflow: auto;
 }
 
-.menu-intro a {
+.menu a, .container a {
   text-decoration: none;
   color: #07bb9c;
 }
 
 .menu-close {
+  margin-top: 20px;
   float: right;
   text-decoration: none;
   color: black;
   font-weight: bold;
+  font-size: 20px;
 }
 
 .menu-button {
@@ -213,7 +215,7 @@ button:hover {
   cursor: pointer;
 }
 
-button#candidate {
+button.candidate {
   font-size: 17px;
   width: 100%;
 }
@@ -265,14 +267,14 @@ button#save {
   width: 250px;
 }
 
-.container:after {
+.container::after {
   content: "";
   position: absolute;
   right: 0;
   top: 0;
   background-color: #07bb9c;
   height: 100%;
-  width: 50px;
+  width: 10px;
 }
 
 .input-group {
@@ -339,6 +341,14 @@ button#save {
   font-weight: bold;
   color: #07bb9c;
   border-radius: 5px;
+}
+
+button.back {
+  background-color: rgba(255, 160, 122, 0.493);
+  font-weight: bold;
+  color: rgb(255, 122, 122);
+  border-radius: 5px;
+  margin-bottom: 5px;
 }
 
 .btn-container {

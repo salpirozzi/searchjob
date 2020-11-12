@@ -34,7 +34,8 @@ router.post("/candidate", function(req, res) {
             subject: "✔ Nuova Iscrizione Annuncio", 
             text: req.body.introduction, 
             html: "Ciao <strong>" + req.body.user_details.username + "!</strong> Abbiamo ricevuto la tua candidatura per la posizione <strong>" + req.body.advert.title + "</strong>. <br /> \
-                    Se la tua candidatura risulterà d'interesse, sarai contattato da <strong>" + req.body.advert.enterprise + "</strong>."
+                    Se la tua candidatura risulterà d'interesse, sarai contattato da <strong>" + req.body.advert.enterprise + "</strong>. <br /><br />\
+                    <a href=http://localhost:3000/advert/" + req.body.advert.id + ">Clicca qui per visualizzare l'alluncio.</a>"
         });
     }
 
