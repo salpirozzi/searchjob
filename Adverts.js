@@ -16,7 +16,7 @@ router.post("/candidate", function(req, res) {
 
         await transporter.sendMail({
             from: transporter.options.auth.user,
-            to: "frex.samp@gmail.com", 
+            to: "fisimal.pro@gmail.com", 
             subject: "✔ Nuova Candidatura " + req.body.advert.title, 
             text: req.body.introduction, 
             html: "Ciao <strong>" + req.body.advert.enterprise + "!</strong> C'è una nuova candidatura per la posizione <strong>" + req.body.advert.title + "</strong>. <br /><br /> \
