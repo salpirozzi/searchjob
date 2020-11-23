@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import { BrowserRouter as Router, Route, Switch, withRouter } from 'react-router-dom';
 
-import Home from './Home.js';
-import Login from './Login.js';
-import Register from './Register.js';
-import Insert from './Insert.js';
-import Advert from './Advert.js';
+import Home from './components/Home.js';
+import Login from './components/Login.js';
+import Register from './components/Register.js';
+import Insert from './components/Insert.js';
+import Advert from './components/Advert.js';
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';

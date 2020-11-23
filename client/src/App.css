@@ -138,6 +138,7 @@ body {
   top: 25%;
   right: 0;
   width: 30%;
+  min-height: 40%;
   max-height: 75%;
   margin-right: 5%;
   margin-top: 5px;
@@ -191,9 +192,28 @@ body {
   color: green;
 }
 
+.menu-owner {
+  font-size: 18px;
+  color: red;
+}
+
 .menu-intro p {
   padding: 0;
   margin: 3px;
+}
+
+.menu-editing {
+  padding: 5px;
+  width: 100%;
+  border-radius: 5px;
+  margin-bottom: 5px;
+  border: 1px solid #07bb9c;
+  margin-top: 2px;
+}
+
+.menu-editing-span {
+  font-weight: bold;
+  margin-bottom: 10px;
 }
 
 .pagination {
@@ -246,10 +266,10 @@ button#save {
 
 .container {
   position: absolute;
-  width: 40%;
   min-height: 200px;
   top: 20%;
   left: 50%;
+  width: 40%; 
   transform: translate(-50%, -20%);
   background-color: white;
   padding: 20px;
@@ -279,7 +299,7 @@ button#save {
 
 .input-group {
   position: relative;
-  width: 90%;
+  width: 100%;
 }
 
 .input-group input, 
@@ -293,7 +313,6 @@ button#save {
   margin-left: 0;
   width: 100%;
   border: 1px solid #07bb9c;
-  text-align: center; 
   border-radius: 5px;
 }
 
@@ -307,6 +326,11 @@ button#save {
   text-decoration: none;
   cursor: pointer;
   color: #07bb9c;
+}
+
+.input-group input,
+.input-group-inline input {
+  padding-left: 30px;
 }
 
 .input-group i {

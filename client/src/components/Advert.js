@@ -5,7 +5,7 @@
 
 import React, { Component } from 'react';
 import { withRouter, Link } from "react-router-dom";
-import firebase from './firebase';
+import firebase from '../firebase';
 import Item from './Item';
 
 class Advert extends Component {
@@ -21,6 +21,10 @@ class Advert extends Component {
         db.collection('adverts').doc(id).onSnapshot(results => {
             var res = results.data();
             res["id"] = id;
+            db.collection('users').doc(res.enterprise).get().then(results => {
+                var enterprise = results.data();
+                res["enterprise"] = enterprise.username;
+            });
             this.setState({ advert_info: res });
         });
     }
@@ -30,8 +34,8 @@ class Advert extends Component {
         return (
             <div className="App">
                 {this.state.advert_info !== null && <section className="container">
-                    <Link to="/"><h3>{this.state.advert_info.title}</h3></Link>
-                    <Item advert_info={this.state.advert_info} showAdvert={this.props.showAdvert} user={this.props.user} user_details={this.props.user_details}/>
+                    <Link to="/"><h3><i className="fa fa-arrow-left" /> {this.state.advert_info.title}</h3></Link>
+                    <Item advert_info={this.state.advert_info} user={this.props.user} user_details={this.props.user_details}/>
                 </section>}
             </div>
         );

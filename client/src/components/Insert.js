@@ -1,7 +1,7 @@
 /* https://stackoverflow.com/questions/49372164/check-a-document-field-for-a-specific-value-in-cloud-firestore */
 
 import React, { Component } from 'react';
-import firebase from './firebase';
+import firebase from '../firebase';
 import { withRouter, Link } from 'react-router-dom';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
@@ -42,12 +42,28 @@ class Insert extends Component {
         this.state = {
             locations: "", 
             requirements: [], 
-            count: 0 
+            count: 0,
+            advert: undefined 
         };
         
         this.searchLocation = this.searchLocation.bind(this);
         this.addInput = this.addInput.bind(this);
         this.removeInput = this.removeInput.bind(this);
+    }
+
+    static getDerivedStateFromProps(props, state) {
+
+        if(props.advert !== state.advert && props.advert !== undefined) {
+            var req = [];
+
+            for(var i = 0; i < props.advert.requirements.length; i++) {
+                req.push("requirement" + i);
+            }
+
+            return {advert: props.advert, requirements: req, count: req.length + 1};
+        }
+        
+        return null;
     }
 
     componentDidMount() {
@@ -82,34 +98,65 @@ class Insert extends Component {
 
     render() {
 
+        var customRequirementsValue = {};
+
+        if(this.state.advert !== undefined) for(var i = 0; i < this.state.advert.requirements.length; i++) {
+            customRequirementsValue["requirement" + i] = this.state.advert.requirements[i];
+        } 
+
+        var customValues = {
+            title: this.state.advert !== undefined ? this.state.advert.title : "",
+            introduction: this.state.advert !== undefined ? this.state.advert.introduction : "", 
+            location: this.state.advert !== undefined ? this.state.advert.location : "", 
+            salary: this.state.advert !== undefined ? this.state.advert.month_salary : "", 
+            time: this.state.advert !== undefined ? this.state.advert.contract[1] : "", 
+            type: this.state.advert !== undefined ? this.state.advert.contract[0] : "", 
+            date: new Date()
+        };
+
+        Object.assign(customValues, customRequirementsValue);
+
         return (
             <div className="App">
-                <div className="container">
-                    <Link to="/"><img src="https://assets.subito.it/static/logos/lavoro.svg" alt="Logo" /></Link>
+                <div className={this.state.advert === undefined ? "container" : ""}>
+                    {this.state.advert === undefined && <Link to="/"><img src="https://assets.subito.it/static/logos/lavoro.svg" alt="Logo" /></Link>}
                     <Formik
-                        initialValues={{ introduction: "", location: "", salary: "", date: "", time: "", type: "", title: "" }}
+                        initialValues={customValues}
                         validationSchema={AdvertSchema}
                         onSubmit={values => {
                             var db = firebase.firestore();
-                            var date = new Date();
-                            var expiry = new Date(values.date);
                             var requirement_list = [];
+                            var date = new Date();
                             this.state.requirements.forEach(field => {
                                 requirement_list.push(values[field]);
                             });
-                            db.collection('adverts').doc().set({
+                            if(this.state.advert === undefined) {
+                                var expiry = new Date(values.date);
+                                db.collection('adverts').doc().set({
+                                    introduction: values.introduction,
+                                    location: values.location,
+                                    month_salary: values.salary,
+                                    contract: [values.type, values.time],
+                                    title: values.title,
+                                    enterprise: this.props.user.uid,
+                                    date: firebase.firestore.Timestamp.fromDate(date),
+                                    requirements: requirement_list,
+                                    expiry: firebase.firestore.Timestamp.fromDate(expiry)
+                                })
+                                toast.success("Annuncio pubblicato con successo!");
+                                this.props.history.push("/"); return 1;
+                            }
+                            db.collection('adverts').doc(this.state.advert.id).update({
                                 introduction: values.introduction,
                                 location: values.location,
                                 month_salary: values.salary,
                                 contract: [values.type, values.time],
                                 title: values.title,
-                                enterprise: this.props.user_details.username,
                                 date: firebase.firestore.Timestamp.fromDate(date),
-                                requirements: requirement_list,
-                                expiry: firebase.firestore.Timestamp.fromDate(expiry)
+                                requirements: requirement_list
                             })
-                            toast.success("Annuncio pubblicato con successo!");
-                            this.props.history.push("/");
+                            this.props.editMode();
+                            toast.success("Annuncio aggiornato!");
                         }}
                         >
                         {({
@@ -149,48 +196,48 @@ class Insert extends Component {
                                 <div className="input-group-inline">
                                     <p>Requisiti per la posizione</p>
                                     <a href="/#" onClick={this.addInput}><i className="fa fa-plus fa-lg" /> Aggiungi requisito</a>
-                                    {this.state.requirements.length > 0 && this.state.requirements.map((field, i) => 
-                                        <div className="input-group" key={i}>
-                                            <a href="/#" onClick={(e) => this.removeInput(e, i, setFieldValue, field)}><i className="fa fa-trash fa-lg" /></a>
-                                            <input type="text" name={field} key={i} placeholder={"Requisito N°" + (i + 1)} value={values[field] || ""} onChange={handleChange} onBlur={handleBlur} />
-                                        </div>
-                                    )}
-                                </div>  
+                                </div>
+                                {this.state.requirements.length > 0 && this.state.requirements.map((field, i) => 
+                                    <div className="input-group" key={i}>
+                                        <a href="/#" onClick={(e) => this.removeInput(e, i, setFieldValue, field)}><i className="fa fa-trash fa-lg" /></a>
+                                        <input type="text" name={field} key={i} placeholder={"Requisito N°" + (i + 1)} value={values[field] || ""} onChange={handleChange} onBlur={handleBlur} />
+                                    </div>
+                                )}
                                 <div className="input-group-inline">
                                     <p>Tipologia contratto</p>
 
                                     <div className="contract">
-                                        <input type="radio" name="type" value="Tempo determinato" onChange={handleChange} onBlur={handleBlur} />
+                                        <input type="radio" name="type" value="Tempo determinato" onChange={handleChange} onBlur={handleBlur} checked={values.type === "Tempo determinato"} />
                                         <label htmlFor="determinato">Tempo determinato</label>
                                     </div>
 
                                     <div className="contract">
-                                        <input type="radio" name="type" value="Tempo indeterminato" onChange={handleChange} onBlur={handleBlur} />
+                                        <input type="radio" name="type" value="Tempo indeterminato" onChange={handleChange} onBlur={handleBlur} checked={values.type === "Tempo indeterminato"} />
                                         <label htmlFor="indeterminato">Tempo indeterminato</label>
                                     </div>
 
                                     <div className="contract">
-                                        <input type="radio" name="type" value="Apprendistato" onChange={handleChange} onBlur={handleBlur} />
+                                        <input type="radio" name="type" value="Apprendistato" onChange={handleChange} onBlur={handleBlur} checked={values.type === "Apprendistato"} />
                                         <label htmlFor="apprendistato">Apprendistato</label>
                                     </div>
 
                                     <div className="contract">
-                                        <input type="radio" name="type" value="Contratto a chiamata" onChange={handleChange} onBlur={handleBlur} />
+                                        <input type="radio" name="type" value="Contratto a chiamata" onChange={handleChange} onBlur={handleBlur} checked={values.type === "Contratto a chiamata"} />
                                         <label htmlFor="chiamata">Contratto a chiamata</label>
                                     </div>
 
                                     <div className="contract">
-                                        <input type="radio" name="type" value="Collaborazione con P.Iva" onChange={handleChange} onBlur={handleBlur} />
+                                        <input type="radio" name="type" value="Collaborazione con P.Iva" onChange={handleChange} onBlur={handleBlur} checked={values.type === "Collaborazione con P.Iva"} />
                                         <label htmlFor="collaborazione">Collaborazione con P.Iva</label>
                                     </div>
 
                                     <div className="contract">
-                                        <input type="radio" name="type" value="Contratto a progetto" onChange={handleChange} onBlur={handleBlur} />
+                                        <input type="radio" name="type" value="Contratto a progetto" onChange={handleChange} onBlur={handleBlur} checked={values.type === "Contratto a progetto"} />
                                         <label htmlFor="progetto">Contratto a progetto</label>
                                     </div>
 
                                     <div className="contract">
-                                        <input type="radio" name="type" value="Tirocinio/Stage" onChange={handleChange} onBlur={handleBlur} />
+                                        <input type="radio" name="type" value="Tirocinio/Stage" onChange={handleChange} onBlur={handleBlur} checked={values.type === "Tirocinio/Stage"} />
                                         <label htmlFor="progetto">Tirocinio/Stage</label>
                                     </div>
 
@@ -200,22 +247,22 @@ class Insert extends Component {
                                     <p>Durata contratto</p>
 
                                     <div className="contract">
-                                        <input type="radio" name="time" value="Tempo pieno" onChange={handleChange} onBlur={handleBlur} />
+                                        <input type="radio" name="time" value="Tempo pieno" onChange={handleChange} onBlur={handleBlur} checked={values.time === "Tempo pieno"} />
                                         <label htmlFor="full-time">Tempo pieno</label>
                                     </div>
 
                                     <div className="contract">
-                                        <input type="radio" name="time" value="Part-time" onChange={handleChange} onBlur={handleBlur} />
+                                        <input type="radio" name="time" value="Part-time" onChange={handleChange} onBlur={handleBlur} checked={values.time === "Part-time"} />
                                         <label htmlFor="part-time">Part-time</label>
                                     </div>
 
                                     {touched.time && errors.time && <div className="input-error">{errors.time}</div>}
                                 </div>
-                                <div className="input-group">
+                                {this.state.advert === undefined && <div className="input-group">
                                     <p>Scadenza bando</p>
                                     <input type="date" name="date" value={values.date} onChange={handleChange} onBlur={handleBlur} />
                                     {touched.date && errors.date && <div className="input-error">{errors.date}</div>}
-                                </div>
+                                </div>}
                                 <div className="input-group">
                                     <button type="submit" className="btn-container insert" disabled={!dirty}>Pubblica</button>
                                 </div>

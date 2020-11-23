@@ -1,7 +1,7 @@
 /* https://stackoverflow.com/questions/49372164/check-a-document-field-for-a-specific-value-in-cloud-firestore */
 
 import React, { Component } from 'react';
-import firebase from './firebase';
+import firebase from '../firebase';
 import { withRouter, Link } from 'react-router-dom';
 import { Formik } from 'formik';
 import * as Yup from 'yup';

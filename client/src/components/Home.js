@@ -5,7 +5,7 @@
 
 import React, { Component } from 'react';
 import { Link, withRouter } from "react-router-dom";
-import firebase from './firebase';
+import firebase from '../firebase';
 import Item from './Item';
 
 import { toast } from 'react-toastify';
@@ -44,15 +44,26 @@ class Home extends Component {
         db.collection('adverts').orderBy('date', 'desc').onSnapshot(results => {
             const data = results.docs.map(doc => {
                 var res = doc.data();
-                res["id"] = doc.id; return res;
+                res["id"] = doc.id; 
+                db.collection('users').doc(res.enterprise).get().then(results => {
+                    var enterprise = results.data();
+                    res["enterprise"] = enterprise.username;
+                });
+                return res;
             });
             var number_page = Math.round(data.length / this.state.items_per_page);
             var adverts_to_show = data.slice(0, this.state.items_per_page);
+            var advert_info_changed = null;
+            if(this.state.advert_info !== null) {
+                var index = adverts_to_show.map(e => e.id).indexOf(this.state.advert_info.id);
+                if(index !== -1) advert_info_changed = adverts_to_show[index];
+            }
             this.setState({ 
                 adverts: data, 
                 showed_adverts: adverts_to_show, 
                 total_pages: (!number_page) ? 1 : number_page, 
-                page_adverts: adverts_to_show 
+                page_adverts: adverts_to_show,
+                advert_info: advert_info_changed
             }/*, () => this.setFilter(e, this.state.contract, this.state.location, this.state.date)*/);
         });
     }
@@ -199,8 +210,8 @@ class Home extends Component {
                         pathname: "/advert/" + this.state.advert_info.id,
                         advert_info: this.state.advert_info, 
                         showAdvert: this.state.showAdvert 
-                    }}><h3>{this.state.advert_info.title}</h3></Link>
-                    <Item advert_info={this.state.advert_info} showAdvert={this.showAdvert} user={this.props.user} user_details={this.props.user_details}/>                 
+                    }}><h3>{this.state.advert_info.title} <i className="fa fa-arrow-right" /></h3></Link>
+                    <Item advert_info={this.state.advert_info} user={this.props.user} user_details={this.props.user_details}/>                 
                 </section>}
 
                 {this.state.total_pages > 1 && <section className="pagination">
