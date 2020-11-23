@@ -49,6 +49,7 @@ class Insert extends Component {
         this.searchLocation = this.searchLocation.bind(this);
         this.addInput = this.addInput.bind(this);
         this.removeInput = this.removeInput.bind(this);
+        this.deleteAdvert = this.deleteAdvert.bind(this);
     }
 
     static getDerivedStateFromProps(props, state) {
@@ -68,6 +69,13 @@ class Insert extends Component {
 
     componentDidMount() {
         if(this.props.user === null) this.props.history.push("/login");
+    }
+
+    deleteAdvert(e) {
+        e.preventDefault();
+        var db = firebase.firestore();
+        db.collection('adverts').doc(this.state.advert.id).delete();
+        toast.error("Annuncio rimosso!");
     }
 
     removeInput(e, i) {
@@ -264,7 +272,12 @@ class Insert extends Component {
                                     {touched.date && errors.date && <div className="input-error">{errors.date}</div>}
                                 </div>}
                                 <div className="input-group">
-                                    <button type="submit" className="btn-container insert" disabled={!dirty}>Pubblica</button>
+                                    {this.state.advert !== undefined && <React.Fragment>
+                                        <button className="yellow candidate" onClick={this.props.editMode}>Indietro</button>
+                                        <button className="back candidate" onClick={this.deleteAdvert}>Elimina</button>
+                                        <button type="submit" className="insert candidate" disabled={!dirty}>Aggiorna</button>
+                                    </React.Fragment>}
+                                    {this.state.advert === undefined && <button type="submit" className="btn-container insert" disabled={!dirty}>Pubblica</button>}
                                 </div>
                             </form>
                         )}
