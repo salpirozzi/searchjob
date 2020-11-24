@@ -65,6 +65,9 @@ class Item extends Component {
 
     render() {
 
+        var date = new Date();
+        var time = firebase.firestore.Timestamp.fromDate(date);
+
         var db = firebase.firestore();
         var index = this.state.advert.id;
         var query = db.collection('nominations');
@@ -76,23 +79,28 @@ class Item extends Component {
             this.setState({ subscribed: subscribed });
         });
 
+        const date_options = {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'}
+
         return (
             <div className="App">
                 {this.state.editing ? <Insert advert={this.state.advert} editMode={this.editMode} /> : <React.Fragment>
                     <div className="menu-intro">
-                        <p><strong>{this.props.advert_info.enterprise}</strong> - {this.props.advert_info.location}</p>
-                        {this.props.advert_info.contract.map(i => <p key={i}>{i}</p>)}
+                        <p>Scade: <strong>{new Date(this.state.advert.expiry.seconds * 1000).toLocaleDateString('it', date_options)}</strong></p>
+                        <p>Azienda: <strong>{this.state.advert.enterprise}</strong></p>
+                        <p>Sita in: <strong>{this.state.advert.location}</strong></p><br />
+                        {this.state.advert.contract.map(i => <p key={i}>{i}</p>)}
                    </div><hr />
                    {this.state.msgbox === false && <React.Fragment>
                         <div className="menu-details">
-                            {this.props.advert_info.introduction}
-                            <ul>{this.props.advert_info.requirements.map(object => <li key={object}>{object}</li>)}</ul>
-                            {this.props.advert_info.month_salary > 0 && <p><strong>Stipendio</strong>: {this.props.advert_info.month_salary} € / mese</p>}
+                            {this.state.advert.introduction}
+                            <ul>{this.state.advert.requirements.map(object => <li key={object}>{object}</li>)}</ul>
+                            {this.state.advert.month_salary > 0 && <p><strong>Stipendio</strong>: {this.state.advert.month_salary} € / mese</p>}
                         </div>
                         <div className="menu-button">
-                            {this.state.subscribed === false && this.state.advert.enterprise !== this.props.user_details.username && <button className="insert candidate" onClick={this.showMsgBox}>Candidati</button>}
-                            {this.state.subscribed === true && <div className="menu-subscribed"><i className="fa fa-check fa-lg" /> Sei già iscritto a quest'annuncio!</div>}
-                            {this.state.advert.enterprise === this.props.user_details.username && <button className="insert candidate" onClick={this.editMode}><i className="fa fa-edit fa-lg" /> Modifica</button>}
+                            {this.state.subscribed === false && this.state.advert.enterprise !== this.props.user_details.username && this.state.advert.expiry >= time && <button className="candidate success" onClick={this.showMsgBox}>Candidati</button>}
+                            {this.state.advert.expiry < time && <div className="menu-error"><i className="fa fa-times fa-lg" /> Annuncio scaduto!</div>}
+                            {this.state.subscribed === true && <div className="menu-success"><i className="fa fa-check fa-lg" /> Sei già iscritto a quest'annuncio!</div>}
+                            {this.state.advert.enterprise === this.props.user_details.username && this.state.advert.expiry >= time && <button className="candidate success" onClick={this.editMode}><i className="fa fa-edit fa-lg" /> Modifica</button>}
                         </div>
                     </React.Fragment>}
                 {this.state.msgbox === true && <React.Fragment>
@@ -142,8 +150,8 @@ class Item extends Component {
                                {touched.curriculum && errors.curriculum && <div className="input-error">{errors.curriculum}</div>}
                            </div>
                            <div className="menu-button">
-                                <button className="back candidate" onClick={this.showMsgBox}>Indietro</button>
-                                <button type="submit" className="insert candidate" disabled={!dirty}>Invia</button>
+                                <button className="candidate error" onClick={this.showMsgBox}>Indietro</button>
+                                <button type="submit" className="candidate success" disabled={!dirty}>Invia</button>
                            </div>
                        </form>
                        )}

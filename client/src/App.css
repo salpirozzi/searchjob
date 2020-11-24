@@ -187,12 +187,12 @@ body {
   margin-bottom: 5px;
 }
 
-.menu-subscribed {
+.menu-success {
   font-size: 18px;
   color: green;
 }
 
-.menu-owner {
+.menu-error {
   font-size: 18px;
   color: red;
 }
@@ -200,20 +200,6 @@ body {
 .menu-intro p {
   padding: 0;
   margin: 3px;
-}
-
-.menu-editing {
-  padding: 5px;
-  width: 100%;
-  border-radius: 5px;
-  margin-bottom: 5px;
-  border: 1px solid #07bb9c;
-  margin-top: 2px;
-}
-
-.menu-editing-span {
-  font-weight: bold;
-  margin-bottom: 10px;
 }
 
 .pagination {
@@ -235,17 +221,42 @@ button:hover {
   cursor: pointer;
 }
 
+.btn-container {
+  float: right;
+  margin-right: 0;
+  font-size: 15px;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 10px;
+}
+
 button.candidate {
   font-size: 17px;
   width: 100%;
 }
 
-button#save {
+button.success {
+  background-color: #e6f8f5;
   font-weight: bold;
   color: #07bb9c;
-  margin-left: 20px;
-  margin-top: 10px;
-  font-size: 15px;
+  border-radius: 5px;
+}
+
+button.error {
+  background-color: rgba(255, 160, 122, 0.493);
+  font-weight: bold;
+  color: rgb(255, 122, 122);
+  border-radius: 5px;
+  margin-bottom: 5px;
+}
+
+button.warning {
+  margin-top: 15px;
+  background-color: rgba(255, 255, 0, 0.363);
+  font-weight: bold;
+  color: rgba(255, 188, 2, 0.74);
+  border-radius: 5px;
+  margin-bottom: 5px;
 }
 
 .modal {
@@ -264,6 +275,7 @@ button#save {
   background-color: white;
   margin: 15%;
   padding: 20px;
+  border-radius: 10px;
 }
 
 .container {
@@ -360,39 +372,6 @@ button#save {
 .input-error {
   font-size: 13px;
   color: red;
-}
-
-.insert {
-  background-color: #e6f8f5;
-  font-weight: bold;
-  color: #07bb9c;
-  border-radius: 5px;
-}
-
-button.back {
-  background-color: rgba(255, 160, 122, 0.493);
-  font-weight: bold;
-  color: rgb(255, 122, 122);
-  border-radius: 5px;
-  margin-bottom: 5px;
-}
-
-button.yellow {
-  margin-top: 15px;
-  background-color: rgba(255, 255, 0, 0.363);
-  font-weight: bold;
-  color: rgba(255, 188, 2, 0.74);
-  border-radius: 5px;
-  margin-bottom: 5px;
-}
-
-.btn-container {
-  float: right;
-  margin-right: 0;
-  font-size: 15px;
-  font-weight: bold;
-  text-align: center;
-  margin-top: 10px;
 }
 
 .loading-img {

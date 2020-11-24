@@ -1,5 +1,4 @@
 /* 
-    https://ui.dev/react-router-v4-query-strings/ 
     https://medium.com/@ericclemmons/react-event-preventdefault-78c28c950e46
 */
 
@@ -41,6 +40,8 @@ class Home extends Component {
 
     componentDidMount() {
         var db = firebase.firestore();
+        var date = new Date();
+        var time = firebase.firestore.Timestamp.fromDate(date);
         db.collection('adverts').orderBy('date', 'desc').onSnapshot(results => {
             const data = results.docs.map(doc => {
                 var res = doc.data();
@@ -51,20 +52,21 @@ class Home extends Component {
                 });
                 return res;
             });
-            var number_page = Math.round(data.length / this.state.items_per_page);
-            var adverts_to_show = data.slice(0, this.state.items_per_page);
+            var total_adverts = data.filter(obj => obj.expiry >= time);
+            var number_page = Math.round(total_adverts.length / this.state.items_per_page);
+            var adverts_to_show = total_adverts.slice(0, this.state.items_per_page);
             var advert_info_changed = null;
             if(this.state.advert_info !== null) {
                 var index = adverts_to_show.map(e => e.id).indexOf(this.state.advert_info.id);
                 if(index !== -1) advert_info_changed = adverts_to_show[index];
             }
             this.setState({ 
-                adverts: data, 
+                adverts: total_adverts, 
                 showed_adverts: adverts_to_show, 
                 total_pages: (!number_page) ? 1 : number_page, 
                 page_adverts: adverts_to_show,
                 advert_info: advert_info_changed
-            }/*, () => this.setFilter(e, this.state.contract, this.state.location, this.state.date)*/);
+            }, () => this.goPage(null, this.state.current_page));
         });
     }
 
@@ -119,11 +121,11 @@ class Home extends Component {
             page_adverts: adverts_to_show
         }, () => this.setFilter(e, this.state.contract, this.state.location, this.state.date));
 
-        this.showAdvert(e, null);
+        if(adverts_to_show.indexOf(this.state.advert_info) === -1) this.showAdvert(e, null);
     }
 
     showAdvert(e, advert) {
-        e.preventDefault();
+        if(e !== null) e.preventDefault();
 
         this.setState({ advert_info: advert });
     }

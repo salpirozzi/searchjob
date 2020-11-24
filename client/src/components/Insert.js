@@ -43,13 +43,15 @@ class Insert extends Component {
             locations: "", 
             requirements: [], 
             count: 0,
-            advert: undefined 
+            advert: undefined,
+            modal_open: false 
         };
         
         this.searchLocation = this.searchLocation.bind(this);
         this.addInput = this.addInput.bind(this);
         this.removeInput = this.removeInput.bind(this);
         this.deleteAdvert = this.deleteAdvert.bind(this);
+        this.openModal = this.openModal.bind(this);
     }
 
     static getDerivedStateFromProps(props, state) {
@@ -69,6 +71,11 @@ class Insert extends Component {
 
     componentDidMount() {
         if(this.props.user === null) this.props.history.push("/login");
+    }
+
+    openModal(e) {
+        e.preventDefault();
+        this.setState({ modal_open: !this.state.modal_open });
     }
 
     deleteAdvert(e) {
@@ -126,6 +133,13 @@ class Insert extends Component {
 
         return (
             <div className="App">
+                {this.state.modal_open && <div className="modal">
+                    <div className="modal-content">
+                        <p>Sei sicuro di voler eliminare l'annuncio <strong>{this.state.advert.title}?</strong></p>
+                        <button className="candidate error" onClick={this.deleteAdvert}>Sì</button>
+                        <button className="candidate success" onClick={this.openModal}>No</button>
+                    </div>
+                </div>}
                 <div className={this.state.advert === undefined ? "container" : ""}>
                     {this.state.advert === undefined && <Link to="/"><img src="https://assets.subito.it/static/logos/lavoro.svg" alt="Logo" /></Link>}
                     <Formik
@@ -134,12 +148,12 @@ class Insert extends Component {
                         onSubmit={values => {
                             var db = firebase.firestore();
                             var requirement_list = [];
-                            var date = new Date();
                             this.state.requirements.forEach(field => {
                                 requirement_list.push(values[field]);
                             });
                             if(this.state.advert === undefined) {
                                 var expiry = new Date(values.date);
+                                var date = new Date();
                                 db.collection('adverts').doc().set({
                                     introduction: values.introduction,
                                     location: values.location,
@@ -160,10 +174,8 @@ class Insert extends Component {
                                 month_salary: values.salary,
                                 contract: [values.type, values.time],
                                 title: values.title,
-                                date: firebase.firestore.Timestamp.fromDate(date),
                                 requirements: requirement_list
                             })
-                            this.props.editMode();
                             toast.success("Annuncio aggiornato!");
                         }}
                         >
@@ -273,9 +285,9 @@ class Insert extends Component {
                                 </div>}
                                 <div className="input-group">
                                     {this.state.advert !== undefined && <React.Fragment>
-                                        <button className="yellow candidate" onClick={this.props.editMode}>Indietro</button>
-                                        <button className="back candidate" onClick={this.deleteAdvert}>Elimina</button>
-                                        <button type="submit" className="insert candidate" disabled={!dirty}>Aggiorna</button>
+                                        <button type="button" className="candidate warning" onClick={this.props.editMode}>Indietro</button>
+                                        <button type="button" className="candidate error" onClick={this.openModal}>Elimina</button>
+                                        <button type="submit" className="candidate success" disabled={!dirty}>Aggiorna</button>
                                     </React.Fragment>}
                                     {this.state.advert === undefined && <button type="submit" className="btn-container insert" disabled={!dirty}>Pubblica</button>}
                                 </div>

@@ -88,3 +88,21 @@
 [1123/081614.704:ERROR:crash_report_database_win.cc(455)] unexpected header
 [1123/141030.538:ERROR:crash_report_database_win.cc(455)] unexpected header
 [1123/165024.966:ERROR:crash_report_database_win.cc(455)] unexpected header
+[1124/081454.776:ERROR:crash_report_database_win.cc(455)] unexpected header
+[1124/082454.787:ERROR:crash_report_database_win.cc(455)] unexpected header
+[1124/082454.787:ERROR:directory_reader_win.cc(43)] FindFirstFile: Impossibile trovare il percorso specificato. (0x3)
+[1124/082454.787:ERROR:crash_report_database_win.cc(455)] unexpected header
+[1124/082454.791:ERROR:crash_report_database_win.cc(455)] unexpected header
+[1124/082954.784:ERROR:crash_report_database_win.cc(455)] unexpected header
+[1124/092600.699:ERROR:crash_report_database_win.cc(455)] unexpected header
+[1124/094100.704:ERROR:crash_report_database_win.cc(455)] unexpected header
+[1124/100405.663:ERROR:crash_report_database_win.cc(455)] unexpected header
+[1124/100600.795:ERROR:crash_report_database_win.cc(455)] unexpected header
+[1124/102723.761:ERROR:crash_report_database_win.cc(455)] unexpected header
+[1124/104223.772:ERROR:crash_report_database_win.cc(455)] unexpected header
+[1124/105723.778:ERROR:crash_report_database_win.cc(455)] unexpected header
+[1124/111825.679:ERROR:crash_report_database_win.cc(455)] unexpected header
+[1124/113325.681:ERROR:crash_report_database_win.cc(455)] unexpected header
+[1124/114825.700:ERROR:crash_report_database_win.cc(455)] unexpected header
+[1124/120325.701:ERROR:crash_report_database_win.cc(455)] unexpected header
+[1124/123814.428:ERROR:crash_report_database_win.cc(455)] unexpected header
