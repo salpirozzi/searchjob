@@ -159,7 +159,7 @@ class Home extends Component {
                             <React.Fragment>
                                 <Link to='/login' className="nav-user-link">(<strong>{this.props.user_details.username}</strong>)</Link>
                                 <a href="/#" onClick={this.logOut} className="nav-user-link">Esci</a>
-                                <Link to='/insert' className="nav-user-link insert">
+                                <Link to='/insert' className="nav-user-link success">
                                     <i className="fa fa-plus"></i> Inserisci un annuncio
                                 </Link>
                             </React.Fragment>

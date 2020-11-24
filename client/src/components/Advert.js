@@ -24,8 +24,8 @@ class Advert extends Component {
             db.collection('users').doc(res.enterprise).get().then(results => {
                 var enterprise = results.data();
                 res["enterprise"] = enterprise.username;
+                this.setState({ advert_info: res });
             });
-            this.setState({ advert_info: res });
         });
     }
 

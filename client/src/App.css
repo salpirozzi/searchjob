@@ -235,7 +235,7 @@ button.candidate {
   width: 100%;
 }
 
-button.success {
+button.success, a.success {
   background-color: #e6f8f5;
   font-weight: bold;
   color: #07bb9c;
