@@ -289,7 +289,7 @@ class Insert extends Component {
                                         <button type="button" className="candidate error" onClick={this.openModal}>Elimina</button>
                                         <button type="submit" className="candidate success" disabled={!dirty}>Aggiorna</button>
                                     </React.Fragment>}
-                                    {this.state.advert === undefined && <button type="submit" className="btn-container insert" disabled={!dirty}>Pubblica</button>}
+                                    {this.state.advert === undefined && <button type="submit" className="btn-container success" disabled={!dirty}>Pubblica</button>}
                                 </div>
                             </form>
                         )}

@@ -124,7 +124,7 @@ class Register extends Component {
                                     {touched.date && errors.date && <div className="input-error">{errors.date}</div>}
                                 </div>
                                 <div className="input-group">
-                                    <button type="submit" className="btn-container insert" disabled={!dirty}>Registrati</button>
+                                    <button type="submit" className="btn-container success" disabled={!dirty}>Registrati</button>
                                 </div>
                             </form>
                         )}

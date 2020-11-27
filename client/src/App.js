@@ -40,11 +40,15 @@ class App extends Component {
         <div className="App">
           <ToastContainer position="top-right" autoClose={1500} hideProgressBar={true}/>
           <Switch>
-            {this.state.loaded === true && <Route exact path="/" component={() => <Home user={this.state.user} user_details={this.state.user_details}/>} />}
-            {this.state.loaded === true && <Route exact path="/login" component={() => <Login user={this.state.user} user_details={this.state.user_details}/>} />}
-            {this.state.loaded === true && <Route exact path="/register" component={() => <Register user={this.state.user} user_details={this.state.user_details}/>} />}
-            {this.state.loaded === true && <Route exact path="/insert" component={() => <Insert user={this.state.user} user_details={this.state.user_details}/>} />}
-            {this.state.loaded === true && <Route exact path="/advert/:id" component={() => <Advert user={this.state.user} user_details={this.state.user_details}/>} />}
+            {this.state.loaded === true && 
+              <React.Fragment>
+                <Route exact path="/" component={() => <Home user={this.state.user} user_details={this.state.user_details}/>} />
+                <Route exact path="/login" component={() => <Login user={this.state.user} user_details={this.state.user_details}/>} />
+                <Route exact path="/register" component={() => <Register user={this.state.user} user_details={this.state.user_details}/>} />
+                <Route exact path="/insert" component={() => <Insert user={this.state.user} user_details={this.state.user_details}/>} />
+                <Route exact path="/advert/:id" component={() => <Advert user={this.state.user} user_details={this.state.user_details}/>} />
+              </React.Fragment>
+            }
           </Switch>
         </div>
       </Router>

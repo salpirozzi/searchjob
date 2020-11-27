@@ -96,7 +96,7 @@ class Login extends Component {
                                 </div>  
                                 <div className="input-group">
                                     <div>Hai dimenticato la password? <a href="/#" onClick={(e) => this.resetPassword(e, values.email)}>Clicca qui</a>!</div>
-                                    <button type="submit" className="btn-container insert" disabled={!dirty}>Entra</button>
+                                    <button type="submit" className="btn-container success" disabled={!dirty}>Entra</button>
                                 </div>
                             </form>
                         )}
