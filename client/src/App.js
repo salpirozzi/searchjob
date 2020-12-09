@@ -18,7 +18,11 @@ class App extends Component {
 
   constructor() {
     super();
-    this.state = { user: null, user_details: [], loaded: false }
+    this.state = { 
+      user: null, 
+      user_details: [], 
+      loaded: false 
+    }
   }
 
   componentDidMount() {
@@ -35,6 +39,7 @@ class App extends Component {
   }
 
   render() {
+
     return (
       <Router>
         <div className="App">
