@@ -181,6 +181,10 @@ body {
   width: 100%;
 }
 
+.menu-msgbox label {
+  font-weight: bold;
+}
+
 .menu-msgbox textarea {
   width: 100%;
   margin-top: 10px;
@@ -197,9 +201,17 @@ body {
   color: red;
 }
 
+.menu-intro {
+  margin-bottom: 10px;
+}
+
 .menu-intro p {
   padding: 0;
   margin: 3px;
+}
+
+.menu-intro p:last-child {
+  margin-bottom: 7px;
 }
 
 .pagination {

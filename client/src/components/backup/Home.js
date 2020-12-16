@@ -1,28 +1,14 @@
 /* 
-    https://ui.dev/react-router-v4-query-strings/ 
     https://medium.com/@ericclemmons/react-event-preventdefault-78c28c950e46
 */
 
 import React, { Component } from 'react';
-import { Link, withRouter } from "react-router-dom";
-import firebase from './firebase';
-import { Formik } from 'formik';
-import * as Yup from 'yup';
-import axios from 'axios';
+import { Link } from "react-router-dom";
+import firebase from '../firebase';
+import Item from './Item';
+import { AppContext } from '../AppContext.js';
 
 import { toast } from 'react-toastify';
-
-const FILE_SIZE = '200000'; //200 KB - unità di misura: BYTE
-const SUPPORTED_FORMATS = ['application/doc', 'application/docx', 'application/pdf'];
-
-const CandidateSchema = Yup.object().shape({
-    introduction: Yup.string()
-        .matches(/^[A-Za-z\u00C0-\u00FF0-9_-\s\d[',./():@]*$/, "La presentazione non può contenere caratteri speciali."),
-    curriculum: Yup.mixed() 
-        .required("Inserisci un curriculum vitae.")
-        .test('fileSize', "File troppo grande. (max 200 kb)", value => value.size <= FILE_SIZE) 
-        .test('fileType', "Estensione non supportata. (.pdf .doc .docx)", value => SUPPORTED_FORMATS.includes(value.type))
-})
 
 class Home extends Component {
 
@@ -38,38 +24,11 @@ class Home extends Component {
             page_adverts: [],
             total_pages: 1,
             current_page: 1,
-            items_per_page: 2,
-            msgbox: false,
-            subscribed: false
+            items_per_page: 2
         };
         this.filterbyDate = this.filterbyDate.bind(this);
         this.logOut = this.logOut.bind(this);
-        this.showMsgBox = this.showMsgBox.bind(this);
-        this.isSubscribed = this.isSubscribed.bind(this);
-    }
-
-    isSubscribed(advert) {
-        var db = firebase.firestore();
-        var index = this.state.adverts.indexOf(advert);
-        var query = db.collection('nominations');
-                    query = query.where("advert_id", "==", index);
-                    query = query.where("candidate_id", "==", this.props.user.uid);
-
-        query.get().then(res => {
-            var subscribed = (res.docs.length < 1) ? false : true;
-            this.setState({ subscribed: subscribed });
-        });
-    }
-
-    showMsgBox(e) {
-        e.preventDefault();
-
-        if(this.state.subscribed === true) return 0;
-
-        if(this.props.user === null) 
-            return this.props.history.push("/register");
-
-        this.setState({ msgbox: !this.state.msgbox });
+        this.showAdvert = this.showAdvert.bind(this);
     }
 
     logOut(e) {
@@ -82,19 +41,33 @@ class Home extends Component {
 
     componentDidMount() {
         var db = firebase.firestore();
+        var date = new Date();
+        var time = firebase.firestore.Timestamp.fromDate(date);
         db.collection('adverts').orderBy('date', 'desc').onSnapshot(results => {
             const data = results.docs.map(doc => {
                 var res = doc.data();
-                res["id"] = doc.id; return res;
+                res["id"] = doc.id; 
+                db.collection('users').doc(res.enterprise).get().then(results => {
+                    var enterprise = results.data();
+                    res["enterprise"] = enterprise.username;
+                });
+                return res;
             });
-            var number_page = Math.round(data.length / this.state.items_per_page);
-            var adverts_to_show = data.slice(0, this.state.items_per_page);
+            var total_adverts = data.filter(obj => obj.expiry >= time);
+            var number_page = Math.round(total_adverts.length / this.state.items_per_page);
+            var adverts_to_show = total_adverts.slice(0, this.state.items_per_page);
+            var advert_info_changed = null;
+            if(this.state.advert_info !== null) {
+                var index = adverts_to_show.map(e => e.id).indexOf(this.state.advert_info.id);
+                if(index !== -1) advert_info_changed = adverts_to_show[index];
+            }
             this.setState({ 
-                adverts: data, 
+                adverts: total_adverts, 
                 showed_adverts: adverts_to_show, 
                 total_pages: (!number_page) ? 1 : number_page, 
-                page_adverts: adverts_to_show 
-            }/*, () => this.setFilter(e, this.state.contract, this.state.location, this.state.date)*/);
+                page_adverts: adverts_to_show,
+                advert_info: advert_info_changed
+            }, () => this.goPage(null, this.state.current_page));
         });
     }
 
@@ -149,17 +122,13 @@ class Home extends Component {
             page_adverts: adverts_to_show
         }, () => this.setFilter(e, this.state.contract, this.state.location, this.state.date));
 
-        this.showAdvert(e, null);
+        if(adverts_to_show.indexOf(this.state.advert_info) === -1) this.showAdvert(e, null);
     }
 
     showAdvert(e, advert) {
-        e.preventDefault();
+        if(e !== null) e.preventDefault();
 
-        if(this.state.msgbox === true && advert === null) 
-            return this.showMsgBox(e);
-        
-        if(advert !== null && this.props.user !== null) this.isSubscribed(advert);
-        this.setState({ advert_info: advert, msgbox: false });
+        this.setState({ advert_info: advert });
     }
 
     render() {
@@ -179,150 +148,86 @@ class Home extends Component {
         const date_options = {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'}
 
         return (
-            <div className="App">
+            <AppContext.Consumer>
+                {value => 
+                    <React.Fragment>
+                        <header className="nav">
+                            <div className="nav-user">
+                                {value.user === null   ?
+                                    <React.Fragment>
+                                        <Link to='/login' className="nav-user-link"><strong>Accedi</strong></Link>
+                                        <Link to='/register' className="nav-user-link">Registrati</Link>
+                                    </React.Fragment>       :
+                                    <React.Fragment>
+                                        <Link to='/login' className="nav-user-link">(<strong>{value.user_details.username}</strong>)</Link>
+                                        <a href="/#" onClick={this.logOut} className="nav-user-link">Esci</a>
+                                        <Link to='/insert' className="nav-user-link success">
+                                            <i className="fa fa-plus"></i> Inserisci un annuncio
+                                        </Link>
+                                    </React.Fragment>
+                                }
+                            </div> 
+                        </header>
 
-                <header className="nav">
-                    <div className="nav-user">
-                        {this.props.user === null   ?
-                            <React.Fragment>
-                                <Link to='/login' className="nav-user-link"><strong>Accedi</strong></Link>
-                                <Link to='/register' className="nav-user-link">Registrati</Link>
-                            </React.Fragment>       :
-                            <React.Fragment>
-                                <Link to='/login' className="nav-user-link">(<strong>{this.props.user_details.username}</strong>)</Link>
-                                <a href="/#" onClick={this.logOut} className="nav-user-link">Esci</a>
-                                <Link to='/insert' className="nav-user-link insert">
-                                    <i className="fa fa-plus"></i> Inserisci un annuncio
-                                </Link>
-                            </React.Fragment>
+                        <section className="filters">
+                            <select name="date" id="date" value={this.state.date !== null ? this.state.date : "null"} onChange={(e) => this.setFilter(e, this.state.contract, this.state.location, e.target.value)}>
+                                <option value="null">Data di pubblicazione</option>
+                                <option value="last_day">Ultime 24 ore</option>
+                                <option value="three_days">Ultimi 3 giorni</option>
+                                <option value="seven_days">Ultimi 7 giorni</option>
+                                <option value="fourteen_days">Ultimi 14 giorni</option>
+                                <option value="last_month">Ultimo mese</option>
+                            </select>
+                            <select name="location" id="location" value={this.state.location !== null ? this.state.location : "null"} onChange={(e) => this.setFilter(e, this.state.contract, e.target.value, this.state.date)}>
+                                <option value="null">Località</option>
+                                {this.state.showed_adverts.length > 0 && locations.map(i => <option key={i} value={i}>{i}</option>)}
+                            </select>
+                            <select name="contract" id="contract" value={this.state.contract !== null ? this.state.contract : "null"} onChange={(e) => this.setFilter(e, e.target.value, this.state.location, this.state.date)}>
+                                <option value="null">Tipologia contratto</option>
+                                {this.state.showed_adverts.length > 0 && contracts.map(i => <option key={i} value={i}>{i}</option>)}
+                            </select>
+                        </section>
+
+                        {this.state.showed_adverts.length < 1 && <img src="https://i.gifer.com/ZZ5H.gif" alt="Loading" className="loading-img"/>}
+                        {this.state.page_adverts.length < 1 && this.state.showed_adverts.length > 0 && <div className="advert-list">Nessun annuncio trovato.</div>}
+                        {this.state.page_adverts.length > 0 && <section className="advert-list">
+                            {this.state.page_adverts.map((announce, idx) =>
+                                <div className="advert" key={idx}>
+                                    <div className="advert-img">
+                                        <img src="https://assets.subito.it/static/icons/categories/26.svg" alt="" />
+                                    </div>
+                                    <div className="advert-data">
+                                        <a href="/#" onClick={(e) => this.showAdvert(e, announce)} id={idx} key={idx}>{announce.title}</a>
+                                        <div className="advert-published">
+                                            {announce.location} - pubblicato {new Date(announce.date.seconds * 1000).toLocaleDateString('it', date_options)}<br />
+                                            {announce.contract.map(i => <div key={i}>{i}</div>)}
+                                            {announce.month_salary > 0 && <p>{announce.month_salary} € / mese</p>}
+                                        </div>
+                                    </div>
+                                </div>)}
+                            </section>
                         }
-                    </div> 
-                </header>
 
-                <section className="filters">
-                    <select name="date" id="date" value={this.state.date !== null ? this.state.date : "null"} onChange={(e) => this.setFilter(e, this.state.contract, this.state.location, e.target.value)}>
-                        <option value="null">Data di pubblicazione</option>
-                        <option value="last_day">Ultime 24 ore</option>
-                        <option value="three_days">Ultimi 3 giorni</option>
-                        <option value="seven_days">Ultimi 7 giorni</option>
-                        <option value="fourteen_days">Ultimi 14 giorni</option>
-                        <option value="last_month">Ultimo mese</option>
-                    </select>
-                    <select name="location" id="location" value={this.state.location !== null ? this.state.location : "null"} onChange={(e) => this.setFilter(e, this.state.contract, e.target.value, this.state.date)}>
-                        <option value="null">Località</option>
-                        {this.state.showed_adverts.length > 0 && locations.map(i => <option key={i} value={i}>{i}</option>)}
-                    </select>
-                    <select name="contract" id="contract" value={this.state.contract !== null ? this.state.contract : "null"} onChange={(e) => this.setFilter(e, e.target.value, this.state.location, this.state.date)}>
-                        <option value="null">Tipologia contratto</option>
-                        {this.state.showed_adverts.length > 0 && contracts.map(i => <option key={i} value={i}>{i}</option>)}
-                    </select>
-                </section>
+                        {this.state.advert_info !== null && <section className="menu">
+                            <a href="/#" className="menu-close" onClick={(e) => this.showAdvert(e, null)}><i className="fa fa-times"></i></a>
+                            <Link to={{
+                                pathname: "/advert/" + this.state.advert_info.id,
+                                advert_info: this.state.advert_info, 
+                                showAdvert: this.state.showAdvert 
+                            }}><h3>{this.state.advert_info.title} <i className="fa fa-arrow-right" /></h3></Link>
+                            <Item advert_info={this.state.advert_info} user={value.user} user_details={value.user_details}/>                 
+                        </section>}
 
-                {this.state.showed_adverts.length < 1 && <img src="https://i.gifer.com/ZZ5H.gif" alt="Loading" className="loading-img"/>}
-                {this.state.page_adverts.length < 1 && this.state.showed_adverts.length > 0 && <div className="advert-list">Nessun annuncio trovato.</div>}
-                {this.state.page_adverts.length > 0 && <section className="advert-list">
-                    {this.state.page_adverts.map((announce, idx) =>
-                        <div className="advert" key={idx}>
-                            <div className="advert-img">
-                                <img src="https://assets.subito.it/static/icons/categories/26.svg" alt="" />
-                            </div>
-                            <div className="advert-data">
-                                <a href="/#" onClick={(e) => this.showAdvert(e, announce)} id={idx} key={idx}>{announce.title}</a>
-                                <div className="advert-published">
-                                    {announce.location} - pubblicato {new Date(announce.date.seconds * 1000).toLocaleDateString('it', date_options)}<br />
-                                    {announce.contract.map(i => <div key={i}>{i}</div>)}
-                                    {announce.month_salary > 0 && <p>{announce.month_salary} € / mese</p>}
-                                </div>
-                            </div>
-                        </div>)}
-                    </section>
+                        {this.state.total_pages > 1 && <section className="pagination">
+                            <button type="button" onClick={(e) => this.goPage(e, this.state.current_page - 1)}><i className="fa fa-chevron-left fa-lg" /></button>
+                            <span>{this.state.current_page}/{this.state.total_pages} </span>
+                            <button type="button" onClick={(e) => this.goPage(e, this.state.current_page + 1)}><i className="fa fa-chevron-right fa-lg" /></button>
+                        </section>}
+                    </React.Fragment>
                 }
-
-                {this.state.advert_info !== null && <section className="menu">
-                    <a href="/#" className="menu-close" onClick={(e) => this.showAdvert(e, null)}><i className="fa fa-times"></i></a>
-                   
-                    <div className="menu-intro">
-                        <Link to={"/advert/" + this.state.advert_info.id}><h3>{this.state.advert_info.title}</h3></Link>
-                        <p>{this.state.advert_info.enterprise} - {this.state.advert_info.location}</p>
-                        {this.state.advert_info.contract.map(i => <p key={i}>{i}</p>)}
-                    </div><hr />
-                    {this.state.msgbox === false && <React.Fragment>
-                        <div className="menu-details">
-                            {this.state.advert_info.introduction}
-                            <ul>{this.state.advert_info.requirements.map(object => <li key={object}>{object}</li>)}</ul>
-                            {this.state.advert_info.month_salary > 0 && <p><strong>Stipendio</strong>: {this.state.advert_info.month_salary} € / mese</p>}
-                        </div>
-                        <div className="menu-button">
-                            {this.state.subscribed === false && <button className="insert" id="candidate" onClick={this.showMsgBox}>Candidati</button>}
-                            {this.state.subscribed === true && <div className="menu-subscribed"><i className="fa fa-check fa-lg" /> Sei già iscritto a quest'annuncio!</div>}
-                        </div>
-                    </React.Fragment>}
-                    {this.state.msgbox === true && <React.Fragment>
-                        <Formik
-                            initialValues={{ introduction: "", curriculum: "" }}
-                            validationSchema={CandidateSchema}
-                            validateOnBlur={false} 
-                            validateOnChange={false}                    
-                            onSubmit={(values, { resetForm }) => {
-                                var upload = firebase.storage().ref('Curriculums/' + this.props.user.uid).put(values.curriculum);
-                                upload.then(() => {
-                                    upload.snapshot.ref.getDownloadURL().then(r => {
-                                        var db = firebase.firestore();
-                                        var today = new Date();
-                                        var index = this.state.adverts.indexOf(this.state.advert_info);
-                                        db.collection('nominations').doc().set({
-                                            advert_id: index,
-                                            candidate_id: this.props.user.uid,
-                                            subscribed_at: firebase.firestore.Timestamp.fromDate(today)
-                                        })
-                                        axios.post("/api/candidate", {introduction: values.introduction, curriculum: r, advert: this.state.advert_info, user: this.props.user, user_details: this.props.user_details});
-                                        toast.success("Candidatura inviata con successo.");
-                                        this.setState({ msgbox: false, subscribed: true });
-                                        resetForm({});
-                                    });
-                                })
-                                upload.catch(err => console.log(err));
-                            }}
-                        >
-                        {({
-                            values,
-                            touched,
-                            errors,
-                            handleChange,
-                            handleBlur,
-                            handleSubmit,
-                            dirty,
-                            setFieldValue
-                        }) => (
-                            <form onSubmit={handleSubmit}>
-                                <div className="menu-msgbox">
-                                    <label htmlFor="introduction"><strong>Inserisci una lettera di presentazione</strong> (opzionale)</label>
-                                    <textarea placeholder="Lettera di presentazione" rows={5} name="introduction" value={values.introduction} onChange={handleChange} onBlur={handleBlur} />
-                                    {touched.introduction && errors.introduction && <div className="input-error">{errors.introduction}</div>}
-
-                                    <label htmlFor="curriculum"><strong>Allega il tuo curriculum</strong></label>
-                                    <input type="file" name="curriculum" accept=".doc, .docx, .pdf" onChange={e => setFieldValue("curriculum", e.currentTarget.files[0])} onBlur={handleBlur} />
-                                    {touched.curriculum && errors.curriculum && <div className="input-error">{errors.curriculum}</div>}
-                                </div>
-                                <div className="menu-button">
-                                    <button type="submit" className="insert" id="candidate" disabled={!dirty}>Invia</button>
-                                </div>
-                            </form>
-                            )}
-                        </Formik>
-                        </React.Fragment>
-                    }
-                </section>}
-
-                {this.state.total_pages > 1 && <section className="pagination">
-                    <button type="button" onClick={(e) => this.goPage(e, this.state.current_page - 1)}><i className="fa fa-chevron-left fa-lg" /></button>
-                    <span>{this.state.current_page}/{this.state.total_pages} </span>
-                    <button type="button" onClick={(e) => this.goPage(e, this.state.current_page + 1)}><i className="fa fa-chevron-right fa-lg" /></button>
-                </section>}
-
-            </div>
+            </AppContext.Consumer>
         );
     }
 }
 
-export default withRouter(Home);
+export default Home;

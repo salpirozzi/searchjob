@@ -1,7 +1,7 @@
-var express = require("express");
-var router = express.Router();
+const express = require("express");
+const Adverts = express.Router();
 
-router.post("/candidate", function(req, res) {
+Adverts.post("/candidate", function(req, res) {
     const nodemailer = require("nodemailer");
 
     async function send() {
@@ -9,9 +9,9 @@ router.post("/candidate", function(req, res) {
         let transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
-                user: "fisimal.pro@gmail.com", 
-                pass: "8709fisimal2182", 
-            },
+                user: "salvatore.dev00@gmail.com", 
+                pass: "searchjob", 
+            }
         });
 
         await transporter.sendMail({
@@ -21,8 +21,7 @@ router.post("/candidate", function(req, res) {
             text: req.body.introduction, 
             html: "Ciao <strong>" + req.body.advert.enterprise + "!</strong> C'è una nuova candidatura per la posizione <strong>" + req.body.advert.title + "</strong>. <br /><br /> \
                     Il candidato è <strong>" + req.body.user_details.username + "</strong> (" + req.body.user.email + "). Di seguito c'è la <strong>presentazione</strong> da lui inviata: <br /><br />" + req.body.introduction,
-            attachments: [
-            {   
+            attachments: [{   
                 filename: 'Curriculum vitae.pdf',
                 path: req.body.curriculum
             }]
@@ -42,4 +41,4 @@ router.post("/candidate", function(req, res) {
     send().catch(console.error);
 })
 
-module.exports = router;
+module.exports = Adverts;

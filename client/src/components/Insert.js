@@ -1,11 +1,8 @@
-/* https://stackoverflow.com/questions/49372164/check-a-document-field-for-a-specific-value-in-cloud-firestore */
-
 import React, { Component } from 'react';
 import firebase from '../firebase';
 import { withRouter, Link } from 'react-router-dom';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-//import axios from 'axios';
 
 import { toast } from 'react-toastify';
 
@@ -63,52 +60,63 @@ class Insert extends Component {
                 req.push("requirement" + i);
             }
 
-            return {advert: props.advert, requirements: req, count: req.length + 1};
+            return {
+                advert: props.advert, 
+                requirements: req, 
+                count: req.length + 1
+            };
         }
         
         return null;
     }
 
     componentDidMount() {
-        if(this.props.user === null) this.props.history.push("/login");
+        if(this.props.user === null)return this.props.history.push("/login");
     }
 
-    openModal(e) {
-        e.preventDefault();
-        this.setState({ modal_open: !this.state.modal_open });
+    openModal() {
+        this.setState({ 
+            modal_open: !this.state.modal_open 
+        });
     }
 
-    deleteAdvert(e) {
-        e.preventDefault();
-        var db = firebase.firestore();
-        db.collection('adverts').doc(this.state.advert.id).delete();
+    deleteAdvert() {
+        const db = firebase.firestore();
+        db.collection('adverts')
+            .doc(this.state.advert.id)
+            .delete();
+
         toast.error("Annuncio rimosso!");
     }
 
     removeInput(e, i) {
         e.preventDefault();
-        var requirements = this.state.requirements;
+
+        let requirements = this.state.requirements;
         requirements.splice(i, 1);
-        this.setState({ requirements: requirements });
+
+        this.setState({ 
+            requirements: requirements 
+        });
     }
 
     addInput(e) {
         e.preventDefault();
-        var requirements = this.state.requirements;
-        var length = this.state.count;
+
+        let requirements = this.state.requirements;
+        let length = this.state.count;
         requirements.push("requirement" + length);
-        this.setState({ requirements: requirements, count: (length + 1) });
+
+        this.setState({ 
+            requirements: requirements, 
+            count: (length + 1) 
+        });
     }
 
     searchLocation(e, setFieldValue) {
         setFieldValue('location', e.target.value);
-        if(e.target.value.length < 3)return 0;
-
-        /*axios.get("https://autosuggest.search.hereapi.com/v1/geocode?q=" + e.target.value + "&apiKey=EBfFMQ4TIe_CXg-9xNyknhnzhHB42ZViMoOEprC14j0&at=42.638426,12.674297&in=countryCode%3AITA")
-            .then(res => { 
-                this.setState({ locations: res.data.items });
-            })
-            .catch(err => console.log(err));*/
+        if(e.target.value.length < 3)return false;
+        /* DA INSERIRE: API Google Maps */
     }
 
     render() {
@@ -132,53 +140,86 @@ class Insert extends Component {
         Object.assign(customValues, customRequirementsValue);
 
         return (
-            <div className="App">
-                {this.state.modal_open && <div className="modal">
-                    <div className="modal-content">
-                        <p>Sei sicuro di voler eliminare l'annuncio <strong>{this.state.advert.title}?</strong></p>
-                        <button className="candidate error" onClick={this.deleteAdvert}>Sì</button>
-                        <button className="candidate success" onClick={this.openModal}>No</button>
+            <React.Fragment>
+
+                {this.state.modal_open && 
+                    <div className="modal">
+                        <div className="modal-content">
+                            <p>
+                                Sei sicuro di voler eliminare l'annuncio <strong>{this.state.advert.title}?</strong>
+                            </p>
+                            <button 
+                                type="button"
+                                className="candidate error" 
+                                onClick={this.deleteAdvert}
+                            >
+                                Sì
+                            </button>
+                            <button 
+                                type="button"
+                                className="candidate success" 
+                                onClick={this.openModal}
+                            >
+                                No
+                            </button>
+                        </div>
                     </div>
-                </div>}
+                }
+
                 <div className={this.state.advert === undefined ? "container" : ""}>
-                    {this.state.advert === undefined && <Link to="/"><img src="https://assets.subito.it/static/logos/lavoro.svg" alt="Logo" /></Link>}
+
+                    {this.state.advert === undefined && 
+                        <Link to="/">
+                            <img src="https://assets.subito.it/static/logos/lavoro.svg" alt="Logo" />
+                        </Link>
+                    }
+
                     <Formik
                         initialValues={customValues}
                         validationSchema={AdvertSchema}
                         onSubmit={values => {
                             var db = firebase.firestore();
                             var requirement_list = [];
-                            this.state.requirements.forEach(field => {
-                                requirement_list.push(values[field]);
-                            });
+                            this.state.requirements.forEach(field => requirement_list.push(values[field]));
+
                             if(this.state.advert === undefined) {
                                 var expiry = new Date(values.date);
                                 var date = new Date();
-                                db.collection('adverts').doc().set({
+
+                                db.collection('adverts')
+                                    .doc()
+                                    .set({
+                                        introduction: values.introduction,
+                                        location: values.location,
+                                        month_salary: values.salary,
+                                        contract: [values.type, values.time],
+                                        title: values.title,
+                                        enterprise: this.props.user.uid,
+                                        date: firebase.firestore.Timestamp.fromDate(date),
+                                        requirements: requirement_list,
+                                        expiry: firebase.firestore.Timestamp.fromDate(expiry)
+                                    });
+
+                                toast.success("Annuncio pubblicato con successo!");
+                                this.props.history.push("/"); 
+                                
+                                return 1;
+                            }
+
+                            db.collection('adverts')
+                                .doc(this.state.advert.id)
+                                .update({
                                     introduction: values.introduction,
                                     location: values.location,
                                     month_salary: values.salary,
                                     contract: [values.type, values.time],
                                     title: values.title,
-                                    enterprise: this.props.user.uid,
-                                    date: firebase.firestore.Timestamp.fromDate(date),
-                                    requirements: requirement_list,
-                                    expiry: firebase.firestore.Timestamp.fromDate(expiry)
-                                })
-                                toast.success("Annuncio pubblicato con successo!");
-                                this.props.history.push("/"); return 1;
-                            }
-                            db.collection('adverts').doc(this.state.advert.id).update({
-                                introduction: values.introduction,
-                                location: values.location,
-                                month_salary: values.salary,
-                                contract: [values.type, values.time],
-                                title: values.title,
-                                requirements: requirement_list
-                            })
+                                    requirements: requirement_list
+                                });
+
                             toast.success("Annuncio aggiornato!");
                         }}
-                        >
+                    >
                         {({
                             values,
                             touched,
@@ -191,111 +232,308 @@ class Insert extends Component {
                         }) => (
                             <form onSubmit={handleSubmit}>
                                 <div className="input-group">
-                                    <i className="fa fa-font fa-lg"></i>
-                                    <input type="text" name="title" placeholder="Titolo inserzione" value={values.title} onChange={handleChange} onBlur={handleBlur} />
-                                    {touched.title && errors.title && <div className="input-error">{errors.title}</div>}
+                                    <i className="fa fa-font fa-lg" />
+                                    <input 
+                                        type="text" 
+                                        name="title" 
+                                        placeholder="Titolo inserzione" 
+                                        value={values.title} 
+                                        onChange={handleChange} 
+                                        onBlur={handleBlur} 
+                                    />
+                                    {touched.title && errors.title && 
+                                        <div className="input-error">
+                                            {errors.title}
+                                        </div>
+                                    }
                                 </div>
                                 <div className="input-group">
-                                    <textarea name="introduction" placeholder="Descrivi la posizione" value={values.introduction} rows={5} onChange={handleChange} onBlur={handleBlur} />
-                                    {touched.introduction && errors.introduction && <div className="input-error">{errors.introduction}</div>}
+                                    <textarea 
+                                        name="introduction" 
+                                        placeholder="Descrivi la posizione" 
+                                        value={values.introduction} 
+                                        rows={5} 
+                                        onChange={handleChange} 
+                                        onBlur={handleBlur} 
+                                    />
+                                    {touched.introduction && errors.introduction && 
+                                        <div className="input-error">
+                                            {errors.introduction}
+                                        </div>
+                                    }
                                 </div>
                                 <div className="input-group">
-                                    <i className="fa fa-map-marker fa-lg"></i>
-                                    <input list="location_list" name="location" value={values.location} autoComplete="off" placeholder="Luogo" onChange={(e) => this.searchLocation(e, setFieldValue)} onBlur={handleBlur} />
+                                    <i className="fa fa-map-marker fa-lg" />
+                                    <input 
+                                        list="location_list" 
+                                        name="location" 
+                                        value={values.location} 
+                                        autoComplete="off" 
+                                        placeholder="Luogo" 
+                                        onChange={(e) => this.searchLocation(e, setFieldValue)} 
+                                        onBlur={handleBlur} 
+                                    />
                                     <datalist id="location_list">
                                         <option value="Italia" />
-                                        {this.state.locations.length > 0 && this.state.locations.map(i => <option value={i.address.label} key={i.id}/>)}
+                                        {this.state.locations.length > 0 && this.state.locations.map(
+                                            (i) => <option value={i.address.label} key={i.id} />
+                                        )}
                                     </datalist>
-                                    {touched.location && errors.location && <div className="input-error">{errors.location}</div>}
+                                    {touched.location && errors.location && 
+                                        <div className="input-error">
+                                            {errors.location}
+                                        </div>
+                                    }
                                 </div>  
                                 <div className="input-group">
-                                    <i className="fa fa-euro fa-lg"></i>
-                                    <input type="number" name="salary" placeholder="Stipendio mensile" value={values.salary} min={0} max={10000} onChange={handleChange} onBlur={handleBlur} />
-                                    {touched.salary && errors.salary && <div className="input-error">{errors.salary}</div>}
-                                </div>  
-                                <div className="input-group-inline">
-                                    <p>Requisiti per la posizione</p>
-                                    <a href="/#" onClick={this.addInput}><i className="fa fa-plus fa-lg" /> Aggiungi requisito</a>
+                                    <i className="fa fa-euro fa-lg" />
+                                    <input 
+                                        type="number" 
+                                        name="salary" 
+                                        placeholder="Stipendio mensile" 
+                                        value={values.salary} 
+                                        min={0} 
+                                        max={10000} 
+                                        onChange={handleChange} 
+                                        onBlur={handleBlur} 
+                                    />
+                                    {touched.salary && errors.salary && 
+                                        <div className="input-error">
+                                            {errors.salary}
+                                        </div>
+                                    }
                                 </div>
-                                {this.state.requirements.length > 0 && this.state.requirements.map((field, i) => 
-                                    <div className="input-group" key={i}>
-                                        <a href="/#" onClick={(e) => this.removeInput(e, i, setFieldValue, field)}><i className="fa fa-trash fa-lg" /></a>
-                                        <input type="text" name={field} key={i} placeholder={"Requisito N°" + (i + 1)} value={values[field] || ""} onChange={handleChange} onBlur={handleBlur} />
-                                    </div>
+
+                                <div className="input-group-inline">
+                                    <p>
+                                        Requisiti per la posizione
+                                    </p>
+                                    <a href="/#" onClick={this.addInput}>
+                                        <i className="fa fa-plus fa-lg" /> Aggiungi requisito
+                                    </a>
+                                </div>
+                                {this.state.requirements.length > 0 && this.state.requirements.map(
+                                    (field, i) => 
+                                        <div className="input-group" key={i}>
+                                            <a href="/#" onClick={(e) => this.removeInput(e, i, setFieldValue, field)}>
+                                                <i className="fa fa-trash fa-lg" />
+                                            </a>
+                                            <input 
+                                                type="text" 
+                                                name={field} 
+                                                key={i} 
+                                                placeholder={"Requisito N°" + (i + 1)} 
+                                                value={values[field] || ""} 
+                                                onChange={handleChange} 
+                                                onBlur={handleBlur} 
+                                            />
+                                        </div>
                                 )}
+
                                 <div className="input-group-inline">
-                                    <p>Tipologia contratto</p>
-
+                                    <p>
+                                        Tipologia contratto
+                                    </p>
                                     <div className="contract">
-                                        <input type="radio" name="type" value="Tempo determinato" onChange={handleChange} onBlur={handleBlur} checked={values.type === "Tempo determinato"} />
-                                        <label htmlFor="determinato">Tempo determinato</label>
+                                        <input 
+                                            type="radio" 
+                                            name="type" 
+                                            value="Tempo determinato" 
+                                            onChange={handleChange} 
+                                            onBlur={handleBlur} 
+                                            checked={values.type === "Tempo determinato"} 
+                                        />
+                                        <label htmlFor="determinato">
+                                            Tempo determinato
+                                        </label>
                                     </div>
 
                                     <div className="contract">
-                                        <input type="radio" name="type" value="Tempo indeterminato" onChange={handleChange} onBlur={handleBlur} checked={values.type === "Tempo indeterminato"} />
-                                        <label htmlFor="indeterminato">Tempo indeterminato</label>
+                                        <input 
+                                            type="radio" 
+                                            name="type" 
+                                            value="Tempo indeterminato" 
+                                            onChange={handleChange} 
+                                            onBlur={handleBlur} 
+                                            checked={values.type === "Tempo indeterminato"} 
+                                        />
+                                        <label htmlFor="indeterminato">
+                                            Tempo indeterminato
+                                        </label>
                                     </div>
 
                                     <div className="contract">
-                                        <input type="radio" name="type" value="Apprendistato" onChange={handleChange} onBlur={handleBlur} checked={values.type === "Apprendistato"} />
-                                        <label htmlFor="apprendistato">Apprendistato</label>
+                                        <input 
+                                            type="radio" 
+                                            name="type" 
+                                            value="Apprendistato" 
+                                            onChange={handleChange} 
+                                            onBlur={handleBlur} 
+                                            checked={values.type === "Apprendistato"} 
+                                        />
+                                        <label htmlFor="apprendistato">
+                                            Apprendistato
+                                        </label>
                                     </div>
 
                                     <div className="contract">
-                                        <input type="radio" name="type" value="Contratto a chiamata" onChange={handleChange} onBlur={handleBlur} checked={values.type === "Contratto a chiamata"} />
-                                        <label htmlFor="chiamata">Contratto a chiamata</label>
+                                        <input 
+                                            type="radio" 
+                                            name="type" 
+                                            value="Contratto a chiamata" 
+                                            onChange={handleChange} 
+                                            onBlur={handleBlur} 
+                                            checked={values.type === "Contratto a chiamata"} 
+                                        />
+                                        <label htmlFor="chiamata">
+                                            Contratto a chiamata
+                                        </label>
                                     </div>
 
                                     <div className="contract">
-                                        <input type="radio" name="type" value="Collaborazione con P.Iva" onChange={handleChange} onBlur={handleBlur} checked={values.type === "Collaborazione con P.Iva"} />
-                                        <label htmlFor="collaborazione">Collaborazione con P.Iva</label>
+                                        <input 
+                                            type="radio" 
+                                            name="type" 
+                                            value="Collaborazione con P.Iva" 
+                                            onChange={handleChange} 
+                                            onBlur={handleBlur} 
+                                            checked={values.type === "Collaborazione con P.Iva"} 
+                                        />
+                                        <label htmlFor="collaborazione">
+                                            Collaborazione con P.Iva
+                                        </label>
                                     </div>
 
                                     <div className="contract">
-                                        <input type="radio" name="type" value="Contratto a progetto" onChange={handleChange} onBlur={handleBlur} checked={values.type === "Contratto a progetto"} />
-                                        <label htmlFor="progetto">Contratto a progetto</label>
+                                        <input 
+                                            type="radio" 
+                                            name="type" 
+                                            value="Contratto a progetto" 
+                                            onChange={handleChange} 
+                                            onBlur={handleBlur} 
+                                            checked={values.type === "Contratto a progetto"} 
+                                        />
+                                        <label htmlFor="progetto">
+                                            Contratto a progetto
+                                        </label>
                                     </div>
 
                                     <div className="contract">
-                                        <input type="radio" name="type" value="Tirocinio/Stage" onChange={handleChange} onBlur={handleBlur} checked={values.type === "Tirocinio/Stage"} />
-                                        <label htmlFor="progetto">Tirocinio/Stage</label>
+                                        <input 
+                                            type="radio" 
+                                            name="type" 
+                                            value="Tirocinio/Stage" 
+                                            onChange={handleChange} 
+                                            onBlur={handleBlur} 
+                                            checked={values.type === "Tirocinio/Stage"} 
+                                        />
+                                        <label htmlFor="progetto">
+                                            Tirocinio/Stage
+                                        </label>
                                     </div>
 
-                                    {touched.type && errors.type && <div className="input-error">{errors.type}</div>}
+                                    {touched.type && errors.type && 
+                                        <div className="input-error">
+                                            {errors.type}
+                                        </div>
+                                    }
                                 </div>
                                 <div className="input-group-inline">
-                                    <p>Durata contratto</p>
-
+                                    <p>
+                                        Durata contratto
+                                    </p>
                                     <div className="contract">
-                                        <input type="radio" name="time" value="Tempo pieno" onChange={handleChange} onBlur={handleBlur} checked={values.time === "Tempo pieno"} />
-                                        <label htmlFor="full-time">Tempo pieno</label>
+                                        <input 
+                                            type="radio" 
+                                            name="time" 
+                                            value="Tempo pieno" 
+                                            onChange={handleChange} 
+                                            onBlur={handleBlur} 
+                                            checked={values.time === "Tempo pieno"} 
+                                        />
+                                        <label htmlFor="full-time">
+                                            Tempo pieno
+                                        </label>
                                     </div>
 
                                     <div className="contract">
-                                        <input type="radio" name="time" value="Part-time" onChange={handleChange} onBlur={handleBlur} checked={values.time === "Part-time"} />
-                                        <label htmlFor="part-time">Part-time</label>
+                                        <input 
+                                            type="radio" 
+                                            name="time" 
+                                            value="Part-time" 
+                                            onChange={handleChange} 
+                                            onBlur={handleBlur} 
+                                            checked={values.time === "Part-time"} 
+                                        />
+                                        <label htmlFor="part-time">
+                                            Part-time
+                                        </label>
                                     </div>
 
-                                    {touched.time && errors.time && <div className="input-error">{errors.time}</div>}
+                                    {touched.time && errors.time && 
+                                        <div className="input-error">
+                                            {errors.time}
+                                        </div>
+                                    }
                                 </div>
                                 {this.state.advert === undefined && <div className="input-group">
-                                    <p>Scadenza bando</p>
-                                    <input type="date" name="date" value={values.date} onChange={handleChange} onBlur={handleBlur} />
-                                    {touched.date && errors.date && <div className="input-error">{errors.date}</div>}
+                                    <p>
+                                        Scadenza bando
+                                    </p>
+                                    <input 
+                                        type="date" 
+                                        name="date" 
+                                        value={values.date} 
+                                        onChange={handleChange} 
+                                        onBlur={handleBlur} 
+                                    />
+                                    {touched.date && errors.date && 
+                                        <div className="input-error">
+                                            {errors.date}
+                                        </div>
+                                    }
                                 </div>}
                                 <div className="input-group">
-                                    {this.state.advert !== undefined && <React.Fragment>
-                                        <button type="button" className="candidate warning" onClick={this.props.editMode}>Indietro</button>
-                                        <button type="button" className="candidate error" onClick={this.openModal}>Elimina</button>
-                                        <button type="submit" className="candidate success" disabled={!dirty}>Aggiorna</button>
-                                    </React.Fragment>}
-                                    {this.state.advert === undefined && <button type="submit" className="btn-container success" disabled={!dirty}>Pubblica</button>}
+                                    {this.state.advert !== undefined && 
+                                        <React.Fragment>
+                                            <button 
+                                                type="button" 
+                                                className="candidate warning" 
+                                                onClick={this.props.editMode}
+                                            >
+                                                Indietro
+                                            </button>
+                                            <button 
+                                                type="button" 
+                                                className="candidate error" 
+                                                onClick={this.openModal}
+                                            >
+                                                Elimina
+                                            </button>
+                                            <button 
+                                                type="submit" 
+                                                className="candidate success" 
+                                                disabled={!dirty}
+                                            >
+                                                Aggiorna
+                                            </button>
+                                        </React.Fragment>
+                                    }
+                                    {this.state.advert === undefined && 
+                                        <button 
+                                            type="submit" 
+                                            className="btn-container success" 
+                                            disabled={!dirty}
+                                        >
+                                            Pubblica
+                                        </button>
+                                    }
                                 </div>
                             </form>
                         )}
                     </Formik>
                 </div>
-            </div>
+            </React.Fragment>
         );
     }
 }

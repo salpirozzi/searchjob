@@ -16,49 +16,65 @@ import './App.css';
 
 class App extends Component {
 
-  constructor() {
-    super();
-    this.state = { 
-      user: null, 
-      user_details: [], 
-      loaded: false 
-    }
-  }
-
-  componentDidMount() {
-    firebase.auth().onAuthStateChanged(async user => { 
-        var data = [];
-
-        if(user !== null) {
-          var db = firebase.firestore();
-          await db.collection('users').doc(user.uid).get().then(res => data = res.data());
+    constructor() {
+        super();
+        this.state = { 
+            user: null, 
+            user_details: [], 
+            loaded: false 
         }
+    }
 
-        this.setState({ user: user, user_details: data, loaded: true });
-    })
-  }
+    componentDidMount() {
+        firebase.auth().onAuthStateChanged(async user => { 
+            var data = [];
 
-  render() {
-
-    return (
-      <Router>
-        <div className="App">
-          <ToastContainer position="top-right" autoClose={1500} hideProgressBar={true}/>
-          <Switch>
-            {this.state.loaded === true && 
-              <React.Fragment>
-                <Route exact path="/" component={() => <Home user={this.state.user} user_details={this.state.user_details}/>} />
-                <Route exact path="/login" component={() => <Login user={this.state.user} user_details={this.state.user_details}/>} />
-                <Route exact path="/register" component={() => <Register user={this.state.user} user_details={this.state.user_details}/>} />
-                <Route exact path="/insert" component={() => <Insert user={this.state.user} user_details={this.state.user_details}/>} />
-                <Route exact path="/advert/:id" component={() => <Advert user={this.state.user} user_details={this.state.user_details}/>} />
-              </React.Fragment>
+            if(user !== null) {
+                const db = firebase.firestore();
+                await db.collection('users')
+                        .doc(user.uid)
+                        .get()
+                        .then(res => data = res.data());
             }
-          </Switch>
-        </div>
-      </Router>
-    )
-  }
+
+            this.setState({ 
+                user: user, 
+                user_details: data, 
+                loaded: true 
+            });
+        })
+    }
+
+    render() {
+
+        const props = {
+            user: this.state.user,
+            user_details: this.state.user_details,
+        }
+      
+        return (
+            <Router>
+                <div className="App">
+                    <ToastContainer 
+                        position="top-right" 
+                        autoClose={1500} 
+                        hideProgressBar={true}
+                    />
+                  <Switch>
+                      {this.state.loaded === true && 
+                          <React.Fragment>
+                              <Route exact path="/" component={() => <Home {...props} />} />
+                              <Route exact path="/login" component={() => <Login {...props} />} />
+                              <Route exact path="/register" component={() => <Register {...props} />} />
+                              <Route exact path="/insert" component={() => <Insert {...props} />} />
+                              <Route exact path="/advert/:id" component={() => <Advert {...props} />} />
+                          </React.Fragment>
+                      }
+                  </Switch>
+              </div>
+          </Router>
+        )
+    }
 }
 
 export default withRouter(App);
