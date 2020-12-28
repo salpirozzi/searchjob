@@ -42,7 +42,7 @@ class Item extends Component {
     
         let query = db.collection('nominations');
         query = query.where("advert_id", "==", index);
-        query = query.where("candidate_id", "==", this.props.user.uid);
+        if(this.props.user !== null) query = query.where("candidate_id", "==", this.props.user.uid);
 
         query.get().then(res => {
             let subscribed = (res.docs.length < 1) ? false : true;
