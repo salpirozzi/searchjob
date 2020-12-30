@@ -36,20 +36,22 @@ class Item extends Component {
     }
 
     componentDidMount() {
+        if(this.props.user !== null) {
 
-        const db = firebase.firestore();
-        const index = this.state.advert.id;
-    
-        let query = db.collection('nominations');
-        query = query.where("advert_id", "==", index);
-        if(this.props.user !== null) query = query.where("candidate_id", "==", this.props.user.uid);
+            const db = firebase.firestore();
+            const index = this.state.advert.id;
+        
+            let query = db.collection('nominations');
+            query = query.where("advert_id", "==", index);
+            query = query.where("candidate_id", "==", this.props.user.uid);
 
-        query.get().then(res => {
-            let subscribed = (res.docs.length < 1) ? false : true;
-            this.setState({ 
-                subscribed: subscribed 
+            query.get().then(res => {
+                let subscribed = (res.docs.length < 1) ? false : true;
+                this.setState({ 
+                    subscribed: subscribed 
+                });
             });
-        });
+        }
     }
 
     static getDerivedStateFromProps(props, state) {
